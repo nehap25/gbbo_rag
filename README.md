@@ -2,6 +2,7 @@
 
 This chabot can be used to answer questions and search through the bakes that contestants made on the Great British Baking Show. Here is an example output:
 
+<img width="598" alt="Image" src="https://github.com/user-attachments/assets/690c93b2-61b6-448d-aa1d-cfcdd6c4f375" />
 
 
 ## How it works
