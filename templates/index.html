@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Great British Baking Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f9f9f9;
+            padding: 20px;
+        }
+        .chat-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .chat-box {
+            height: 400px;
+            overflow-y: scroll;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .chat-message {
+            margin: 10px 0;
+        }
+        .user-message {
+            text-align: right;
+        }
+        .assistant-message {
+            text-align: left;
+            background-color: #e0f7fa;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .user-message span, .assistant-message span {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+        .user-message span {
+            background-color: #f1c40f;
+            color: white;
+        }
+        .assistant-message span {
+            background-color: #3498db;
+            color: white;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-box" id="chatBox">
+            {% if answer %}
+                <div class="chat-message assistant-message">
+                    <span>{{ answer }}</span>
+                </div>
+            {% endif %}
+        </div>
+        <form method="POST" action="/">
+            <input type="text" name="query" placeholder="Ask a question..." required />
+        </form>
+    </div>
+
+    <script>
+        const form = document.querySelector('form');
+        const input = document.querySelector('input[type="text"]');
+        const chatBox = document.getElementById('chatBox');
+
+        form.addEventListener('submit', (event) => {
+            event.preventDefault();
+            const userMessage = input.value;
+            if (!userMessage) return;
+
+            // Append user message to the chat box
+            chatBox.innerHTML += `<div class="chat-message user-message"><span>${userMessage}</span></div>`;
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            // Clear input field
+            input.value = '';
+
+            // Make the request to the backend (simulate a delay for demo)
+            setTimeout(() => {
+                fetch('/', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: `query=${encodeURIComponent(userMessage)}`
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const responseText = data.answer;
+                    if (responseText) {
+                        // Format the response text
+                        const formattedResponse = formatResponse(responseText);
+                        
+                        // Append assistant message to the chat box
+                        chatBox.innerHTML += `<div class="chat-message assistant-message"><span>${formattedResponse}</span></div>`;
+                        chatBox.scrollTop = chatBox.scrollHeight;  // Scroll to the bottom
+                    } else {
+                        console.error('No answer found in the response');
+                    }
+                });
+            }, 500);
+        });
+
+        // Function to format the response text nicely
+        function formatResponse(response) {
+            // Split the response by each entry (assuming it's a list of bakes)
+            let formatted = '';
+            const entries = response.split('\n');
+
+            entries.forEach(entry => {
+                // Here we look for a pattern in the entry, e.g., "1. Kate" (the baker name), season, etc.
+                const bakerMatch = entry.match(/(\d+)\.\s(\*\*[^*]+\*\*)\s\((Season\s\d+, Episode\s\d+)\)\s-\s(\*\*[^*]+\*\*)\s:\s([^:]+)(\s-\s\*Timestamp:\s[\d\.,\s-]+)/);
+
+                if (bakerMatch) {
+                    // We have a match, let's format it
+                    const [fullMatch, index, baker, seasonEpisode, challenge, description, timestamp] = bakerMatch;
+
+                    formatted += `
+                        <div class="bake-entry">
+                            <p><strong>Entry ${index}</strong></p>
+                            <p><strong>Baker:</strong> ${baker}</p>
+                            <p><strong>Season and Episode:</strong> ${seasonEpisode}</p>
+                            <p><strong>Challenge:</strong> ${challenge}</p>
+                            <p><strong>Description:</strong> ${description}</p>
+                            <p><em>Timestamp:</em> ${timestamp}</p>
+                            <hr />
+                        </div>
+                    `;
+                } else {
+                    // If no match, just add the original response as is
+                    formatted += `<p>${entry}</p>`;
+                }
+            });
+            return formatted;
+        }
+    </script>
+</body>
+</html>
